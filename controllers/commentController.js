@@ -22,7 +22,7 @@ const addCommentsToArticle = async (req, res) => {
       message: "Article Not Found",
     });
   }
-
+console.log('req.body',req.body)
   const { body } = req.body.comment;
 
   const newComment = await Comment.create({
@@ -40,7 +40,42 @@ const addCommentsToArticle = async (req, res) => {
   });
 };
 
-const getCommentsFromArticle = async (req, res) => {};
+const getCommentsFromArticle = async (req, res) => {
+
+  const {slug}  = req.params;
+
+  const article = await Article.findOne({slug}).exec();
+
+  if(!article){
+    return res.status(401).json({
+      message: "Article Not Found",
+    });
+  };
+
+  const loggedin = req.loggedin;
+
+  if(loggedin){
+    const loginUser = await User.findById(req.userId).exec();
+
+    return res.status(200).json({
+      comments: await Promise.all(article.comments.map(async (commentId) => {
+        const commentObj = await Comment.findById(commentId).exec();
+        return await commentObj.toCommentResponse(loginUser);
+      })),
+    });
+  }else{
+
+    return res.status(200).json({
+      comments: await Promise.all(article.comments.map(async (commentId) => {
+        const commentObj = await Comment.findById(commentId).exec();
+
+        const temp  = commentObj.toCommentResponse(false)
+        return temp;
+      })),
+    });
+  }
+  
+};
 
 const deleteComment = async (req, res) => {
   const userId = req.userId;

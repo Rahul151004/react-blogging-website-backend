@@ -1,7 +1,6 @@
 const Article = require("../models/Article");
 
 
-
 const getTags = async (req, res) => {
 
     //return distinct tags 
